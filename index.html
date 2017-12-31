@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<style>
+
+.counties :hover {
+  fill: red;
+  fill-opacity: 0.75;
+}
+.county-borders {
+  fill: none;
+  stroke: rgb(200,200,200);
+  stroke-width: 0.5px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.state-borders {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+/* Style for Custom Tooltip */
+div.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  display:block;
+  overflow:auto;     
+  padding: 5px;             
+  font: 12px sans-serif;        
+  background: white;   
+  border: 0px;      
+  border-radius: 3px;           
+  pointer-events: none;         
+}
+
+</style>
+<svg width="960" height="600"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+<script type="text/javascript" src="usmapdata.json"></script>
+<script>
+
+var svg = d3.select("svg");
+
+var path = d3.geoPath();
+
+// Append Div for tooltip to SVG
+var tooltip = d3.select("body").append("div") 
+    .attr("class", "tooltip")       
+    .style("opacity", 0);
+
+d3.json("usmap.json", function(error, us) {
+  if (error) throw error;
+  
+  /* STATES */
+  svg.append("g")
+      .attr("class", "states")
+      .selectAll("path")
+      .data(topojson.feature(us, us.objects.states).features)
+      .enter().append("path")
+      .attr("d", path)
+
+  d3.tsv("county-codes.tsv", function(code_data) {
+
+  /* COUNTIES */
+  svg.append("g")
+      .attr("class", "counties")
+      .selectAll("path")
+      .data(topojson.feature(us, us.objects.counties).features)
+      .enter().append("path")
+      .attr("d", path)
+      .style("fill", "rgb(200,200,200)")
+      .on("click", function (d) {
+          d3.select(this).style("fill", "steelblue");  
+      })
+      .on("mouseover", function(d) { 
+        for(var i = 0; i < code_data.length; i++){
+              if(d.id === code_data[i].id){
+                  var countyName = code_data[i].name;
+              }  
+          }
+          console.log(countyName);
+          tooltip.transition()        
+              .duration(200)      
+              .style("opacity", .9);
+              tooltip.html(countyName)  
+              .style("left", (d3.event.pageX) + "px")   
+              .style("top", (d3.event.pageY - 28) + "px");
+              // div.text(topojson.feature(us, us.objects.counties).features)
+              // .style("left", (d3.event.pageX) + "px")     
+              // .style("top", (d3.event.pageY - 28) + "px");           
+        })
+        // fade out tooltip on mouse out               
+        .on("mouseout", function(d) {       
+            tooltip.transition()        
+                  .duration(500)      
+                  .style("opacity", 0);   
+        });
+         
+ 
+  svg.append("path")
+      .attr("class", "state-borders")
+      .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
+
+  svg.append("path")
+        .attr("class", "county-borders")
+        .attr("d", path(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b; })));
+
+   });
+ });
+</script>
