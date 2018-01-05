@@ -100,7 +100,8 @@ var tooltip = d3.select("body").append("div")
       // .on("click", function(d){
       //     if (d3.event.shiftKey) {
       //         d3.select(this).style("fill", "steelblue");
-      //     }  
+      //     }
+      //     clicked(d);
       // })
       .on("mouseover", function(d) { 
           for(var i = 0; i < code_data.length; i++){
@@ -156,6 +157,7 @@ function clicked(d) {
       .duration(750)
       .style("stroke-width", 1.5 / scale + "px")
       .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+
 }  
 
 /* reset zoom */
