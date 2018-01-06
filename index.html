@@ -96,13 +96,6 @@ var tooltip = d3.select("body").append("div")
       .style("fill", "rgb(200,200,200)")
       //click to zoom
       .on("click", clicked)
-      /* TODO: implement shift click to fill county */
-      // .on("click", function(d){
-      //     if (d3.event.shiftKey) {
-      //         d3.select(this).style("fill", "steelblue");
-      //     }
-      //     clicked(d);
-      // })
       .on("mouseover", function(d) { 
           for(var i = 0; i < code_data.length; i++){
               if(d.id === code_data[i].id){
@@ -141,24 +134,28 @@ var tooltip = d3.select("body").append("div")
 
 /* click to zoom */
 function clicked(d) {
-  if (active.node() === this) return reset();
-  active.classed("active", false);
-  active = d3.select(this).classed("active", true);
+  if (d3.event.shiftKey || d3.event.ctrlKey) {
+      d3.event.preventDefault();
+      d3.select(this).style("fill", "steelblue");
+  }else{
+      if (active.node() === this) return reset();
+      active.classed("active", false);
+      active = d3.select(this).classed("active", true);
 
-  var bounds = path.bounds(d),
-      dx = bounds[1][0] - bounds[0][0],
-      dy = bounds[1][1] - bounds[0][1],
-      x = (bounds[0][0] + bounds[1][0]) / 2,
-      y = (bounds[0][1] + bounds[1][1]) / 2,
-      scale = .3 / Math.max(dx / width, dy / height),
-      translate = [width / 2 - scale * x, height / 2 - scale * y];
+      var bounds = path.bounds(d),
+          dx = bounds[1][0] - bounds[0][0],
+          dy = bounds[1][1] - bounds[0][1],
+          x = (bounds[0][0] + bounds[1][0]) / 2,
+          y = (bounds[0][1] + bounds[1][1]) / 2,
+          scale = .3 / Math.max(dx / width, dy / height),
+          translate = [width / 2 - scale * x, height / 2 - scale * y];
 
-  g.transition()
-      .duration(750)
-      .style("stroke-width", 1.5 / scale + "px")
-      .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
-
-}  
+      g.transition()
+          .duration(750)
+          .style("stroke-width", 1.5 / scale + "px")
+          .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+    }  
+}
 
 /* reset zoom */
 function reset() {
@@ -170,7 +167,8 @@ function reset() {
       .style("stroke-width", "1.5px")
       .attr("transform", "");
 }
- });
+});
+
 
 </script>
 </div>
