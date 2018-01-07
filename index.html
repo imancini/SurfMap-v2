@@ -47,6 +47,7 @@ div.tooltip {
 var width = 960,
     height = 600,
     active = d3.select(null);
+
 //var svg = d3.select("svg");
 
 var path = d3.geoPath();
@@ -102,7 +103,7 @@ var tooltip = d3.select("body").append("div")
                   var countyName = code_data[i].name;
               }  
           }
-          console.log(countyName);
+          // console.log(countyName);
           tooltip.transition()        
               .duration(200)      
               .style("opacity", .9);
@@ -134,10 +135,12 @@ var tooltip = d3.select("body").append("div")
 
 /* click to zoom */
 function clicked(d) {
-  if (d3.event.shiftKey || d3.event.ctrlKey) {
-      d3.event.preventDefault();
-      d3.select(this).style("fill", "steelblue");
-  }else{
+  var boolean = true;
+  if (d3.select(this).classed("active") == boolean) {
+         console.log("active = "+boolean+". filling steelblue..");
+         d3.select(this).style("fill", "steelblue");
+         d3.select(this).classed("active", false);
+  } else {
       if (active.node() === this) return reset();
       active.classed("active", false);
       active = d3.select(this).classed("active", true);
