@@ -132,6 +132,7 @@
     /* click to zoom */
     function clicked(d) {
         var boolean = true;
+        //second time county is clicked consecutively
         if (d3.select(this).classed("active") == boolean) {
             console.log("active = "+boolean+". filling steelblue..");
             d3.select(this).style("fill", "steelblue");
