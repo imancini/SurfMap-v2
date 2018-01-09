@@ -1,177 +1,172 @@
 <!DOCTYPE html>
 <style>
-.background {
-  fill: none;
-  pointer-events: all;
-}
-.counties :hover {
-  fill-opacity: 0.75;
-}
-.county-borders {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 0.2px;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  pointer-events: none;
-}
-.state-borders {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 2px;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  pointer-events: none;
-}
+    .background {
+        fill: none;
+        pointer-events: all;
+    }
+    .counties :hover {
+        fill-opacity: 0.75;
+    }
+    .county-borders {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 0.2px;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        pointer-events: none;
+    }
+    .state-borders {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2px;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        pointer-events: none;
+    }
 
-/* Style for Custom Tooltip */
-div.tooltip {   
-  position: absolute;           
-  text-align: center;           
-  display:block;
-  overflow:auto;     
-  padding: 5px;             
-  font: 12px sans-serif;        
-  background: white;   
-  border: 0px;      
-  border-radius: 3px;           
-  pointer-events: none;         
-}
-
+    /* Style for Custom Tooltip */
+    div.tooltip {   
+        position: absolute;           
+        text-align: center;           
+        display:block;
+        overflow:auto;     
+        padding: 5px;             
+        font: 12px sans-serif;        
+        background: white;   
+        border: 0px;      
+        border-radius: 3px;           
+        pointer-events: none;         
+    }
 </style>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/topojson.v2.min.js"></script>
-<div style="center:align;">
+<div>
 <script>
 
-var width = 960,
-    height = 600,
-    active = d3.select(null);
+    var width = 960,
+        height = 600,
+        active = d3.select(null);
 
-//var svg = d3.select("svg");
+    var path = d3.geoPath();
 
-var path = d3.geoPath();
+    // Append Div for tooltip to SVG
+    var tooltip = d3.select("body").append("div") 
+        .attr("class", "tooltip")       
+        .style("opacity", 0);
+      
+        // /* STATES */
+        // svg.append("g")
+        //     .attr("class", "states")
+        //     .selectAll("path")
+        //     .data(topojson.feature(us, us.objects.states).features)
+        //     .enter().append("path")
+        //     .attr("d", path)
+        //     .on("click", function(d) { 
+        //         console.log(d.id);
+        //     })
 
-// Append Div for tooltip to SVG
-var tooltip = d3.select("body").append("div") 
-    .attr("class", "tooltip")       
-    .style("opacity", 0);
-  
-  // /* STATES */
-  // svg.append("g")
-  //     .attr("class", "states")
-  //     .selectAll("path")
-  //     .data(topojson.feature(us, us.objects.states).features)
-  //     .enter().append("path")
-  //     .attr("d", path)
-  //     .on("click", function(d) { 
-  //         console.log(d.id);
-  //     })
+    //open up tsv file
+    d3.tsv("county-codes.tsv", function(code_data) {
 
-  d3.tsv("county-codes.tsv", function(code_data) {
+    //set height and width of svg
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
 
-  
+    /*background so we can click to reset the zoom*/
+    svg.append("rect")
+        .attr("class", "background")
+        .attr("width", width)
+        .attr("height", height)
+        .on("click", reset);    
 
-  var svg = d3.select("body").append("svg")
-      .attr("width", width)
-      .attr("height", height);
+    var g = svg.append("g")
 
-  /*background so we can click to reset the zoom*/
-  svg.append("rect")
-    .attr("class", "background")
-    .attr("width", width)
-    .attr("height", height)
-    .on("click", reset);    
+    //open and prepare json
+    d3.json("usmap.json", function(error, us) {
+        if (error) throw error;
 
-  var g = svg.append("g")
-      .attr("class", "counties");
+        /* COUNTIES */ 
+        g.selectAll("path")
+            .attr("class", "counties")
+            .data(topojson.feature(us, us.objects.counties).features)
+            .enter().append("path")
+            .attr("d", path)
+            .style("fill", "rgb(200,200,200)")
+            //click to zoom
+            .on("click", clicked)
+            //mouseover tooltip
+            .on("mouseover", function(d) { 
+                //fetch countyName from tsv file corresponding to current datum
+                for(var i = 0; i < code_data.length; i++){
+                    if(d.id === code_data[i].id){
+                        var countyName = code_data[i].name;
+                    }  
+                }
+                tooltip.transition()        
+                    .duration(200)      
+                    .style("opacity", .9);
+                    console.log(countyName);
+                    tooltip.html(countyName)  
+                    .style("left", (d3.event.pageX) + "px")   
+                    .style("top", (d3.event.pageY - 28) + "px");           
+            })
+            // fade out tooltip on mouse out               
+            .on("mouseout", function(d) {       
+                tooltip.transition()        
+                    .duration(500)      
+                    .style("opacity", 0);   
+            });
+             
+        //draw the state borders
+        g.append("path")
+            .attr("class", "state-borders")
+            .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
 
-  d3.json("usmap.json", function(error, us) {
-  if (error) throw error;
+        //draw the county borders
+        g.append("path")
+            .attr("class", "county-borders")
+            .attr("d", path(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b; })));
+    });
 
-     /* COUNTIES */ 
-     g.selectAll("path")
-      .data(topojson.feature(us, us.objects.counties).features)
-      .enter().append("path")
-      .attr("d", path)
-      .style("fill", "rgb(200,200,200)")
-      //click to zoom
-      .on("click", clicked)
-      .on("mouseover", function(d) { 
-          for(var i = 0; i < code_data.length; i++){
-              if(d.id === code_data[i].id){
-                  var countyName = code_data[i].name;
-              }  
-          }
-          // console.log(countyName);
-          tooltip.transition()        
-              .duration(200)      
-              .style("opacity", .9);
-              tooltip.html(countyName)  
-              .style("left", (d3.event.pageX) + "px")   
-              .style("top", (d3.event.pageY - 28) + "px");
-              // div.text(topojson.feature(us, us.objects.counties).features)
-              // .style("left", (d3.event.pageX) + "px")     
-              // .style("top", (d3.event.pageY - 28) + "px");           
-      })
-      // fade out tooltip on mouse out               
-      .on("mouseout", function(d) {       
-          tooltip.transition()        
-                .duration(500)      
-                .style("opacity", 0);   
-      });
-         
- 
-  g.append("path")
-      .attr("class", "state-borders")
-      .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
+    /* click to zoom */
+    function clicked(d) {
+        var boolean = true;
+        if (d3.select(this).classed("active") == boolean) {
+            console.log("active = "+boolean+". filling steelblue..");
+            d3.select(this).style("fill", "steelblue");
+            d3.select(this).classed("active", false);
+        } else {
+            if (active.node() === this) return reset();
+            active.classed("active", false);
+            active = d3.select(this).classed("active", true);
 
-  g.append("path")
-      .attr("class", "county-borders")
-      .attr("d", path(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b; })));
+            var bounds = path.bounds(d),
+                dx = bounds[1][0] - bounds[0][0],
+                dy = bounds[1][1] - bounds[0][1],
+                x = (bounds[0][0] + bounds[1][0]) / 2,
+                y = (bounds[0][1] + bounds[1][1]) / 2,
+                scale = .3 / Math.max(dx / width, dy / height),
+                translate = [width / 2 - scale * x, height / 2 - scale * y];
 
+            g.transition()
+                .duration(750)
+                .style("stroke-width", 1.5 / scale + "px")
+                .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+        }  
+    }
 
-   });
+    /* reset zoom */
+    function reset() {
+        active.classed("active", false);
+        active = d3.select(null);
 
-/* click to zoom */
-function clicked(d) {
-  var boolean = true;
-  if (d3.select(this).classed("active") == boolean) {
-         console.log("active = "+boolean+". filling steelblue..");
-         d3.select(this).style("fill", "steelblue");
-         d3.select(this).classed("active", false);
-  } else {
-      if (active.node() === this) return reset();
-      active.classed("active", false);
-      active = d3.select(this).classed("active", true);
-
-      var bounds = path.bounds(d),
-          dx = bounds[1][0] - bounds[0][0],
-          dy = bounds[1][1] - bounds[0][1],
-          x = (bounds[0][0] + bounds[1][0]) / 2,
-          y = (bounds[0][1] + bounds[1][1]) / 2,
-          scale = .3 / Math.max(dx / width, dy / height),
-          translate = [width / 2 - scale * x, height / 2 - scale * y];
-
-      g.transition()
-          .duration(750)
-          .style("stroke-width", 1.5 / scale + "px")
-          .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
-    }  
-}
-
-/* reset zoom */
-function reset() {
-  active.classed("active", false);
-  active = d3.select(null);
-
-  g.transition()
-      .duration(750)
-      .style("stroke-width", "1.5px")
-      .attr("transform", "");
-}
-});
-
+        g.transition()
+            .duration(750)
+            .style("stroke-width", "1.5px")
+            .attr("transform", "");
+        }
+    });
 
 </script>
 </div>
