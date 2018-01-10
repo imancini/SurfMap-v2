@@ -40,6 +40,8 @@
 </style>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/topojson.v2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jwerty/0.3.2/jwerty.min.js"></script>
+
 <div>
 <script>
 
@@ -106,7 +108,7 @@
                 tooltip.transition()        
                     .duration(200)      
                     .style("opacity", .9);
-                    console.log(countyName);
+                    // console.log(countyName);
                     tooltip.html(countyName)  
                     .style("left", (d3.event.pageX) + "px")   
                     .style("top", (d3.event.pageY - 28) + "px");           
@@ -127,6 +129,9 @@
         g.append("path")
             .attr("class", "county-borders")
             .attr("d", path(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b; })));
+
+        jwerty.key('⎋', function(){reset();});
+
     });
 
     /* click to zoom */
@@ -168,6 +173,8 @@
             .attr("transform", "");
         }
     });
+
+
 
 </script>
 </div>
